@@ -1,0 +1,39 @@
+# Runs the API and the frontend together. Expects indudex-web to be cloned next
+# to this repo (../indudex-web).
+#
+#   docker compose up --build
+#
+# Override the public URLs for a real deployment, e.g. in a .env file next to
+# this one:
+#   WEB_ORIGIN=https://indudex.com
+#   PUBLIC_API_URL=https://api.indudex.com
+
+services:
+  api:
+    build: .
+    environment:
+      PORT: 4000
+      # Origins allowed by CORS: where the frontend is served from.
+      CORS_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../indudex-web
+      args:
+        # The API URL as the *browser* sees it (baked into the bundle at build
+        # time), not the internal Docker address.
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:4000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped

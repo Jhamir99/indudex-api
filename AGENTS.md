@@ -67,13 +67,15 @@ Do not add server-side search that would require the full user profile (see Priv
 ## Conventions
 
 - **English everywhere**: code, identifiers, comments, docs, commit messages, PR descriptions.
-- **Simple code**: prefer the plainest solution that works; no abstractions until a second real use needs them. Use descriptive names (no cryptic abbreviations). Comment only where it adds something the code cannot say, such as *why* a non-obvious decision was made, never *what* the next line does.
+- **Simple code**: prefer the plainest solution that works; no abstractions until a second real use needs them. Use descriptive names (no cryptic abbreviations). Comment only where it adds something the code cannot say, such as _why_ a non-obvious decision was made, never _what_ the next line does.
 - TypeScript strict, ESM (`"type": "module"`, `NodeNext`, `verbatimModuleSyntax`: use `import type` for types and `.js` extensions in relative imports).
 - Package manager: **pnpm**.
 - Validation with **Zod**, at the edges: HTTP input/output and data coming from every source.
 - Tests with **Vitest**, without network: adapter parsers run against saved fixtures; gate, dedupe and schemas get unit tests.
 - Default port **4000**, overridable with `PORT` (the frontend's Next dev server uses 3000).
-- Deployment: **Docker on a self-hosted server**. API and crawler run as separate processes (the crawler/pile build on a schedule) sharing the same code and storage.
+- Deployment: **Docker on a self-hosted server** (`Dockerfile`, and `docker-compose.yml` for API + web). API and crawler run as separate processes (the crawler/pile build on a schedule) sharing the same code and storage.
+- **CORS**: the browser calls the API directly, so the frontend's origin must be listed in `CORS_ORIGIN` (comma-separated). Only `GET` is allowed: the API is read-only for clients.
+- Linting with **oxlint** (ESLint's TypeScript support does not cover TypeScript 7), formatting with **Prettier**. A pre-commit hook and CI enforce both.
 
 ## Open decisions
 

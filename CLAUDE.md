@@ -28,13 +28,26 @@ pnpm typecheck  # tsc --noEmit over src, test and config files
 pnpm test       # vitest in watch mode
 pnpm test:run   # vitest once (use this to verify a change)
 pnpm vitest run src/app.test.ts   # a single test file
+pnpm lint       # oxlint --deny-warnings
+pnpm format     # prettier --write .   (format:check in CI)
+docker compose up --build   # API on :4000 + web on :3000 (needs ../indudex-web next to this repo)
 ```
+
+Before calling a change done, run what CI runs: `pnpm lint && pnpm format:check && pnpm typecheck && pnpm test:run && pnpm build`.
 
 TypeScript config is split: `tsconfig.json` type-checks everything and emits nothing; `tsconfig.build.json` extends it and compiles only `src/` (excluding `*.test.ts`) into `dist/`.
 
 Tests live next to the code they test (`src/**/*.test.ts`). Saved source responses for adapter tests go in `test/fixtures/`. Test routes with `app.request(...)` on the app from `src/app.ts`; never start a server in tests.
 
 pnpm is pinned via `packageManager` in `package.json`. Node 25+ no longer bundles corepack, so pnpm is installed globally with `npm i -g pnpm`. Never use `npm install` here: it would create a `package-lock.json` next to `pnpm-lock.yaml`.
+
+Tooling:
+
+- **Linter: oxlint** (`.oxlintrc.json`), not ESLint. typescript-eslint does not support TypeScript 7 (its peer range is `<6.1`), and ESLint cannot read TypeScript without it. oxlint does not depend on the `typescript` package. It has no type-aware rules; `pnpm typecheck` covers types.
+- **Prettier** with default options (double quotes, semicolons), the same style as indudex-web.
+- **Pre-commit hook** (husky + lint-staged, config in `package.json`): runs oxlint and Prettier on staged files. Never bypass it with `--no-verify`.
+- **CI** (`.github/workflows/ci.yml`): lint, format check, typecheck, tests and build on every push to `main` and every PR. Node version from `.nvmrc`, pnpm from `packageManager`.
+- **Docker**: `Dockerfile` builds `dist/` and runs it with production dependencies only. `docker-compose.yml` runs this API together with indudex-web; it lives here because there is no shared repo for both. Env vars: see `.env.example` (`PORT`, `CORS_ORIGIN`).
 
 Planned, not created yet: separate entry points for the crawler and the pile build. Add them here when they exist.
 
