@@ -66,6 +66,7 @@ Do not add server-side search that would require the full user profile (see Priv
 ## Conventions
 
 - **English everywhere**: code, identifiers, comments, docs, commit messages, PR descriptions.
+- **Simple code**: prefer the plainest solution that works; no abstractions until a second real use needs them. Use descriptive names (no cryptic abbreviations). Comment only where it adds something the code cannot say, such as *why* a non-obvious decision was made, never *what* the next line does.
 - TypeScript strict, ESM (`"type": "module"`, `NodeNext`, `verbatimModuleSyntax`: use `import type` for types and `.js` extensions in relative imports).
 - Package manager: **pnpm**.
 - Validation with **Zod**, at the edges: HTTP input/output and data coming from every source.

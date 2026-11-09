@@ -10,6 +10,13 @@ Backend of Indudex, rewritten from the monolith [`JustJans/indudex`](https://git
 
 The server listens on `PORT` (default 4000).
 
+## Core conventions
+
+Full rules are in `AGENTS.md`. The ones to keep in mind on every change:
+
+- Code, comments and docs in English.
+- Simple code, descriptive names, comments only where they add something.
+
 ## Commands
 
 ```bash
