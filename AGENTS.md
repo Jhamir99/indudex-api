@@ -66,6 +66,7 @@ Do not add server-side search that would require the full user profile (see Priv
 
 ## Conventions
 
+- **Licence**: source-available (see `LICENSE`). Every file holding third-party data (ESCO, GeoNames, company lists, …) must credit its source and licence in a header, as `LICENSE` promises.
 - **English everywhere**: code, identifiers, comments, docs, commit messages, PR descriptions.
 - **Simple code**: prefer the plainest solution that works; no abstractions until a second real use needs them. Use descriptive names (no cryptic abbreviations). Comment only where it adds something the code cannot say, such as _why_ a non-obvious decision was made, never _what_ the next line does.
 - TypeScript strict, ESM (`"type": "module"`, `NodeNext`, `verbatimModuleSyntax`: use `import type` for types and `.js` extensions in relative imports).

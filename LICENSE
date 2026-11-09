@@ -1,0 +1,46 @@
+Copyright (c) 2026 JustJans (github.com/JustJans) and Jhamir99
+(github.com/Jhamir99). All rights reserved.
+
+This is source-available software, not open source. The code is published so
+that anyone can read it and check what the service does with their data. No
+permission to use it is given.
+
+This repository is the backend of a rewrite of github.com/JustJans/indudex, by
+the same copyright holders. That repository keeps its own licence.
+
+What is allowed
+  Reading this code, and quoting short parts of it when discussing or
+  reviewing it.
+
+What is not allowed, without the copyright holders' written permission
+  Running, deploying or hosting this software, in whole or in part, in public
+  or in private, for yourself or for anyone else.
+  Copying, modifying, translating or building on it.
+  Distributing, publishing, selling or sublicensing it, or anything derived
+  from it.
+
+The only instance of this software authorised to run is the one the copyright
+holders operate at https://indudex.com/.
+
+While this repository is public on GitHub, GitHub's Terms of Service let its
+users view it and fork it within GitHub; nothing here grants more than that,
+and nothing beyond GitHub.
+
+Not covered by this licence
+  Third-party data this software ships or collects keeps its own terms, and
+  the files that hold it credit their source in a header. In particular:
+    occupation titles from ESCO, © European Union, reused with attribution;
+    towns from GeoNames (www.geonames.org), under the Creative Commons
+      Attribution 4.0 licence;
+    company and job-board lists derived from open-source lists, under those
+      lists' own licences.
+  The job adverts this software collects — they belong to the sources that
+    published them; each source and its terms are named alongside its adverts.
+  The packages named in package.json — each under its own licence.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

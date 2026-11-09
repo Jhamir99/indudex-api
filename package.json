@@ -36,5 +36,7 @@
       "prettier --write"
     ],
     "*.{json,md,yml,yaml}": "prettier --write"
-  }
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true
 }
