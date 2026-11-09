@@ -40,10 +40,10 @@ Planned, not created yet: separate entry points for the crawler and the pile bui
 
 ## Stack
 
-- Node, TypeScript 7 (strict, ESM / `NodeNext`, `verbatimModuleSyntax`), `tsx` for development.
+- Node, **TypeScript 7** (strict, ESM / `NodeNext`, `verbatimModuleSyntax`), `tsx` for development. Only `tsc` (TypeScript 7.0.2, the single copy in the tree) checks types: `tsx` and Vitest strip types without checking them, so run `pnpm typecheck` to verify a change. Keep `typescript` on `^7`; dependencies must not pull in an older copy (`pnpm why typescript` shows one version).
 - Hono 4 served by `@hono/node-server`.
 - Vitest 5 for tests (`vitest.config.ts`, Node environment).
-- To add: `zod`, `@hono/zod-openapi` (schemas and the OpenAPI spec).
+- Zod 4 + `@hono/zod-openapi` 1. Import `z` from `@hono/zod-openapi` (it adds `.openapi()`), not from `zod`. `src/app.ts` is an `OpenAPIHono` app: routes are `createRoute` + `app.openapi(...)`, schemas are named with `.openapi('Name')` so they land in `components.schemas`, and `app.doc31('/openapi.json', ...)` serves the spec. Current routes: `GET /health`, `GET /openapi.json`.
 
 ## Intended structure
 
@@ -52,7 +52,7 @@ Target layout; only `index.ts` and `app.ts` exist so far. Adjust here when it ch
 ```
 src/
   index.ts          # API process entry: builds the app, serves it on PORT
-  app.ts            # Hono app (routes mounted here, so tests can call app.request)
+  app.ts            # OpenAPIHono app: routes mounted here, spec at /openapi.json; tests call app.request
   routes/           # one file per resource; Zod/OpenAPI route definitions
   schemas/          # shared Zod schemas: advert, shard, index, catalogue, source
   crawler/

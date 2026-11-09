@@ -55,7 +55,7 @@ Do not add server-side search that would require the full user profile (see Priv
 ## Contract with the frontend
 
 - The single source of truth is **Zod schemas declared through `@hono/zod-openapi`**. They validate requests/responses at runtime, give the backend its TS types and generate the **OpenAPI** spec.
-- The spec is served by the API (planned: `GET /openapi.json`). The frontend generates its types and client from it (`openapi-typescript` + `openapi-fetch`). There is no shared types package.
+- The spec is served by the API at `GET /openapi.json` (OpenAPI 3.1). Every route is defined with `createRoute` + `app.openapi(...)` so it appears in the spec; plain `app.get(...)` routes are invisible to the frontend's generated client. The frontend generates its types and client from it (`openapi-typescript` + `openapi-fetch`). There is no shared types package.
 - Shard and index files are also described as schemas in the spec.
 - An advert has the **same id and the same non-text fields in every locale**; only the translatable text (title, description, …) differs. A plate or a link must point to the same advert whatever the language.
 - Breaking changes to the contract need a version bump of the affected route or shard format. Never change the shape of a published field silently.
