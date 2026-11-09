@@ -16,6 +16,10 @@ Both are a rewrite of the monolith [`JustJans/indudex`](https://github.com/JustJ
 - If something becomes a permanent rule, propose moving it to `AGENTS.md` instead of leaving it in the memory.
 - Never store sensitive data in it (keys, tokens, personal data).
 
+## Rules
+
+- Read `docs/constitution.md` and the active spec (`specs/NNN-*/`) before touching code.
+
 ## Scope of this repo
 
 In scope:
