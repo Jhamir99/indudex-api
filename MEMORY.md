@@ -16,10 +16,13 @@ Working memory of indudex-api. Rules for keeping it: see "Memory" in `AGENTS.md`
 
 **Next**
 
-- Port the first adapter with a fixture-based test, then the shared Zod schemas (advert, shard, index) starting from legacy `packages/published-data`.
+- Start with T001 of `specs/001-legacy-sources-scraper/tasks.md` (62 tasks over 5 waves; wave 1 = core + reference feed).
 
 ## Decisions
 
+- Spec 001 (`specs/001-legacy-sources-scraper/spec.md`) is drafted, not approved: all legacy sources by waves, failures isolated with previous adverts kept, scraper stops at validated stored adverts, sources without credentials ported but disabled. No-expiry adverts are kept unlimited; broken legacy sources are ported disabled and flagged. Waves are by source type; cadence, rate limits and backoff start from the legacy `crawl.yml` values, configurable per source. No open questions left; ready to approve.
+- Tests use Vitest; the `node --test` line in the constitution was a copy-paste slip and was removed.
+- Plan 001 approved: ports and adapters (MVVM rejected: no view in a backend), YAML config validated with Zod, one parsing library, stop switch as a file flag, career sites as data lists, hourly external cron.
 - Linter is oxlint, not ESLint: typescript-eslint does not support TypeScript 7.
 - Routes use `createRoute` + `app.openapi(...)`; plain `app.get` is invisible to the frontend's generated client.
 - Package manager is pnpm only; `npm install` would create a stray `package-lock.json`.
