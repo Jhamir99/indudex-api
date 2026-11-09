@@ -21,24 +21,33 @@ Full rules are in `AGENTS.md`. The ones to keep in mind on every change:
 
 ```bash
 pnpm install
-pnpm dev      # tsx watch src/index.ts
-pnpm build    # tsc → dist/
-pnpm start    # node dist/index.js
+pnpm dev        # tsx watch src/index.ts
+pnpm build      # tsc -p tsconfig.build.json → dist/ (src only, no tests)
+pnpm start      # node dist/index.js
+pnpm typecheck  # tsc --noEmit over src, test and config files
+pnpm test       # vitest in watch mode
+pnpm test:run   # vitest once (use this to verify a change)
+pnpm vitest run src/app.test.ts   # a single test file
 ```
+
+TypeScript config is split: `tsconfig.json` type-checks everything and emits nothing; `tsconfig.build.json` extends it and compiles only `src/` (excluding `*.test.ts`) into `dist/`.
+
+Tests live next to the code they test (`src/**/*.test.ts`). Saved source responses for adapter tests go in `test/fixtures/`. Test routes with `app.request(...)` on the app from `src/app.ts`; never start a server in tests.
 
 pnpm is pinned via `packageManager` in `package.json`. Node 25+ no longer bundles corepack, so pnpm is installed globally with `npm i -g pnpm`. Never use `npm install` here: it would create a `package-lock.json` next to `pnpm-lock.yaml`.
 
-Planned, not installed yet: `pnpm test` (Vitest), a type-check script (`tsc --noEmit`), and separate entry points for the crawler and the pile build. Add them here when they exist.
+Planned, not created yet: separate entry points for the crawler and the pile build. Add them here when they exist.
 
 ## Stack
 
 - Node, TypeScript 7 (strict, ESM / `NodeNext`, `verbatimModuleSyntax`), `tsx` for development.
 - Hono 4 served by `@hono/node-server`.
-- To add: `zod`, `@hono/zod-openapi` (schemas and the OpenAPI spec), `vitest`.
+- Vitest 5 for tests (`vitest.config.ts`, Node environment).
+- To add: `zod`, `@hono/zod-openapi` (schemas and the OpenAPI spec).
 
 ## Intended structure
 
-Target layout, not yet created. Adjust here when it changes:
+Target layout; only `index.ts` and `app.ts` exist so far. Adjust here when it changes:
 
 ```
 src/
