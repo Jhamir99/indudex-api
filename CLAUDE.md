@@ -49,7 +49,7 @@ src/
   crawler/
     adapters/       # one adapter per source: fetch + parse, nothing else
     run.ts          # crawler process entry: runs the sources that are due
-  pile/             # normalise → gate → dedupe → shards/index
+  pile/             # normalise → gate → dedupe → translate → shards/index per locale
   catalogues/       # ISCO/ESCO, countries, towns, languages, degrees
   storage/          # the only module that touches files (future: DB)
   config/           # source lists, cadences, takedowns
@@ -68,4 +68,4 @@ When reproducing behavior, check the legacy repo rather than guessing:
 - `packages/published-data`: the published data shape the old web read. Start from it when writing the Zod schemas.
 - `builder/config/takedowns.yml`, `companies*.yml`, `careers*.yml`, `vendors.yml`: source lists and takedowns.
 - `docs/CRAWLING.md`: crawling research and sources.
-- `builder/mt/`: machine translation. It stays **out of this repo**, so read it only to understand the data.
+- `builder/mt/`: the legacy machine translation. It is the reference for producing translated adverts; how translation is done in the rewrite is still an open decision (see `AGENTS.md`).

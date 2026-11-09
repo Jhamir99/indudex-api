@@ -12,13 +12,13 @@ In scope:
 
 1. **HTTP API** (Hono on Node) that the frontend consumes.
 2. **Crawler**: one adapter per source (public employment services, ATS APIs, employers' careers sites, partner feeds), each on its own cadence.
-3. **Pile build**: normalise → gate (keep only in-scope occupations in Europe, drop expired) → dedupe → shards + index + metadata.
-4. **Catalogues**: occupations (ISCO-08 groups and their ESCO occupations/titles), countries, towns, languages, degrees, vetoes.
-5. **Storage access** for adverts and crawler state (see "Storage").
+3. **Pile build**: normalise → gate (keep only in-scope occupations in Europe, drop expired) → dedupe → translate → shards + index + metadata.
+4. **Translated adverts**: every advert is stored and served **already translated into every supported locale** (`en`, `es`, `cat`, the same locales as the frontend), so the client never waits for a translation. Adverts are text only, so keeping one copy per locale is cheap.
+5. **Catalogues**: occupations (ISCO-08 groups and their ESCO occupations/titles), countries, towns, languages, degrees, vetoes.
+6. **Storage access** for adverts and crawler state (see "Storage").
 
 Out of scope:
 
-- **Machine translation** of adverts (legacy `builder/mt`). It does not live here.
 - **Anything about the user.** See the privacy rules below.
 - UI copy and locale routing (that is the frontend).
 
@@ -47,7 +47,7 @@ Carried over from the legacy project:
 
 The frontend does the fine-grained matching **on the client**, so the API serves:
 
-- **The pile as shards** (JSON split by occupation family and country) + an index + metadata (e.g. when it was last rebuilt). The client decides which shards to download and filters locally.
+- **The pile as shards** (JSON split by **locale**, occupation family and country) + an index + metadata (e.g. when it was last rebuilt). The client downloads only the shards of its current locale and filters locally.
 - **Regular endpoints** for catalogues, advert detail, sources and their licences, pile status, health.
 
 Do not add server-side search that would require the full user profile (see Privacy).
@@ -57,11 +57,12 @@ Do not add server-side search that would require the full user profile (see Priv
 - The single source of truth is **Zod schemas declared through `@hono/zod-openapi`**. They validate requests/responses at runtime, give the backend its TS types and generate the **OpenAPI** spec.
 - The spec is served by the API (planned: `GET /openapi.json`). The frontend generates its types and client from it (`openapi-typescript` + `openapi-fetch`). There is no shared types package.
 - Shard and index files are also described as schemas in the spec.
+- An advert has the **same id and the same non-text fields in every locale**; only the translatable text (title, description, …) differs. A plate or a link must point to the same advert whatever the language.
 - Breaking changes to the contract need a version bump of the affected route or shard format. Never change the shape of a published field silently.
 
 ## Storage
 
-**Undecided long-term.** For now, adverts and crawler state are stored in **files** on disk (as the legacy store did). Keep all storage access behind a small repository module so it can be swapped for a database later. Routes, adapters and the pipeline must never touch the filesystem layout directly.
+**Undecided long-term.** For now, adverts and crawler state are stored in **files** on disk (as the legacy store did), with **one set of advert files per locale**. A database may replace this later. Keep all storage access behind a small repository module so it can be swapped for a database later. Routes, adapters and the pipeline must never touch the filesystem layout directly.
 
 ## Conventions
 
@@ -81,4 +82,5 @@ Do not assume an answer to these; ask or leave a clear TODO.
 - Long-term storage (database or not, which one).
 - How shards are served: from the API process or as static files behind a reverse proxy.
 - The environment variable the frontend uses for the API base URL.
-- Where machine translation of adverts will live.
+- How adverts get translated: which engine (legacy used its own MT in `builder/mt`) and whether it runs in this repo or as a separate service. Either way, the result is stored here as described above.
+- Whether the original-language text is kept and shown too, and how missing translations fall back (e.g. to English).
