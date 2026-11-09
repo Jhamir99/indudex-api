@@ -16,6 +16,7 @@ Full rules are in `AGENTS.md`. The ones to keep in mind on every change:
 
 - Code, comments and docs in English.
 - Simple code, descriptive names, comments only where they add something.
+- Keep the "Current state" section of `AGENTS.md` up to date: update it in the same commit as any change that alters what is built, what is missing or what is next.
 
 ## Commands
 

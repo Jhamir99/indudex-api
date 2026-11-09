@@ -6,6 +6,27 @@ Indudex is a free, public job portal for **engineers and technicians in Europe**
 
 Both are a rewrite of the monolith [`JustJans/indudex`](https://github.com/JustJans/indudex), which mixed the web app, the crawler/pile builder and ops scripts in one poorly structured codebase. Use the legacy repo as the **behavioral reference** (sources, gate rules, dedupe, data shape), not as code to copy: it is being restructured precisely because its structure is bad.
 
+## Current state
+
+> **Keep this section up to date.** Whenever a change alters what exists, what works or what is next (a route, a schema, an adapter, a script, a dependency, a decision), update this section in the same commit. Skip it only if nothing here changes. Last updated: 2026-11-09.
+
+**Built**
+
+- Hono 4 app on Node (`src/app.ts`, entry `src/index.ts`, port `PORT` or 4000), as an `OpenAPIHono` with CORS limited to `GET` and the origins in `CORS_ORIGIN`.
+- Routes: `GET /health` (`{ status: "ok" }`) and `GET /openapi.json` (OpenAPI 3.1, the contract the frontend generates its client from).
+- Tooling: Vitest (one test file, `src/app.test.ts`), oxlint, Prettier, husky + lint-staged pre-commit, GitHub Actions CI, Dependabot, Dockerfile and `docker-compose.yml` (API + web), licence and README.
+
+**Not built yet**
+
+- Everything in the product scope: crawler and adapters, pile build (normalise, gate, dedupe, translate, shards/index), catalogues, storage module, shard/advert/source/catalogue endpoints and their Zod schemas.
+- Separate entry points for the crawler and the pile build.
+
+**Next**
+
+- Port the first adapter with a fixture-based test, then the shared Zod schemas (advert, shard, index) starting from legacy `packages/published-data`.
+
+**Open decisions**: see the section at the end of this file.
+
 ## Scope of this repo
 
 In scope:
