@@ -26,7 +26,7 @@ In scope:
 
 1. **HTTP API** (Hono on Node) that the frontend consumes.
 2. **Crawler**: one adapter per source (public employment services, ATS APIs, employers' careers sites, partner feeds), each on its own cadence.
-3. **Pile build**: normalise → gate (keep only in-scope occupations in Europe, drop expired) → dedupe → translate → shards + index + metadata.
+3. **Pile build**: normalise → gate (keep only in-scope occupations in Europe, drop expired; an advert without an expiry date expires 2 years after its posted date) → dedupe → translate → shards + index + metadata.
 4. **Translated adverts**: every advert is stored and served **already translated into every supported locale** (`en`, `es`, `ca`, the same locale codes as the frontend; Catalan is `ca`, even though the frontend URL says `/cat`), so the client never waits for a translation. Adverts are text only, so keeping one copy per locale is cheap.
 5. **Catalogues**: occupations (ISCO-08 groups and their ESCO occupations/titles), countries, towns, languages, degrees, vetoes.
 6. **Storage access** for adverts and crawler state (see "Storage").
