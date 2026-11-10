@@ -29,7 +29,7 @@ Generated from `spec.md` and `plan.md`. Tasks are ordered by dependency, name th
 - [ ] **T009 — Storage: atomic file writer** · FR: FR-6
       Done when: `src/storage/atomic.test.ts` passes on a temporary folder: a write either completes or leaves the old file intact (simulated failure between temp write and rename).
 - [ ] **T010 — Storage: AdvertStore and source state persistence** · FR: FR-6, FR-12, FR-13 · Depends: T003, T009
-      Done when: tests pass: saving replaces that source's set; an empty or failed read leaves it unchanged; other sources are untouched; no deletion by age; state is written and read back for several sources; a corrupt file is reported, not silently reset.
+      Done when: tests pass: saving replaces that source's set; an empty or failed read leaves it unchanged; other sources are untouched; an advert without expiry date is kept until 2 years after its posted date (first-seen date if none) and then dropped; an advert with an expiry date is dropped after it; a failed or empty read deletes nothing; state is written and read back for several sources; a corrupt file is reported, not silently reset.
 - [ ] **T011 — HTTP client: timeout, retries, error classification** · FR: FR-5 · Depends: T003
       Done when: tests with a fake server pass: a slow response times out, a 5xx is retried a limited number of times, a 4xx is not retried, each ends as a typed failure.
 - [ ] **T012 — HTTP client: robots.txt check with cache** · FR: FR-7 · Depends: T011

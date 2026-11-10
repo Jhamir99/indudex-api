@@ -57,7 +57,7 @@ If a source keeps failing, then the scraper shall wait longer before each new at
 _Acceptance:_ A failing source never prevents another source from running, and the run finishes. A parked source makes no request until its waiting period ends. The waiting periods start from the legacy project's values (about 1, 3 and 7 days between attempts, parked for about a month after 6 consecutive failures).
 
 **FR-6 — Keep previous adverts on failure.**
-If a source fails, then the scraper shall keep the adverts already stored from it until each one expires by its own date.
+If a source fails, then the scraper shall keep the adverts already stored from it until each one expires (by its own date, or 2 years after it was posted when it has none).
 _Acceptance:_ After a failed run, adverts from before the failure are still present and unchanged.
 
 **FR-7 — Politeness.**
@@ -107,7 +107,7 @@ _Acceptance:_ Adding a new source requires describing only what is specific to t
 - A source changes its format without notice: its adverts fail validation, the source is marked failed, previous adverts are kept.
 - A source returns zero adverts: this is reported and does not delete previous adverts.
 - A source is slow or never answers: the request ends after a limit and counts as a failure.
-- An advert has no expiry date: it is kept without a time limit for now (retention may be revisited in a later spec).
+- An advert has no expiry date: it is treated as expiring 2 years after its posted date (after the date it was first seen, if the source gives no posted date).
 - The same advert appears in two sources: both are stored; removing duplicates belongs to the pile build.
 - A site forbids scraping in `robots.txt` after we started collecting from it: the source becomes disallowed at the next run.
 - A required credential is revoked or expires: the source is marked failed (not silently disabled) and previous adverts are kept.
