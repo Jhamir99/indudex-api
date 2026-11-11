@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-Scrapper of Indudex (repo `indudex-scrapper`, formerly `indudex-api`), rewritten from the monolith [`JustJans/indudex`](https://github.com/JustJans/indudex). It collects adverts and stores them as JSON; the future `indudex-api` will read them and serve the frontend.
+Scrapper of Indudex (repo `indudex-scrapper`, formerly `indudex-api`), rewritten from the monolith [`JustJans/indudex`](https://github.com/JustJans/indudex). It holds two batch processes: the **scrapper** (collects adverts into the store) and the **processor** (normalise, gate, dedupe, translate titles, publish a versioned dataset). The future `indudex-api` serves that dataset to the frontend. See the diagram in `AGENTS.md`.
 
 The code is still the Hono starter (`src/index.ts`, `src/app.ts`, `GET /health`, port `PORT` or 4000, Dockerfile and `docker-compose.yml` with the web). It is a leftover from when this repo was the API: the scrapper is a process, not a server, and that starter is meant to move to `indudex-api` when it is created. Update this file as real architecture emerges.
 
@@ -50,7 +50,7 @@ Tooling:
 - **CI** (`.github/workflows/ci.yml`): lint, format check, typecheck, tests and build on every push to `main` and every PR. Node version from `.nvmrc`, pnpm from `packageManager`.
 - **Docker**: `Dockerfile` builds `dist/` and runs it with production dependencies only. `docker-compose.yml` still runs the starter together with indudex-web; it lives here only until `indudex-api` exists, then it moves there. Env vars: see `.env.example` (`PORT`, `CORS_ORIGIN`).
 
-Planned, not created yet: separate entry points for the crawler and the pile build. Add them here when they exist.
+Planned, not created yet: separate entry points for the scrapper, the processor and the title translator, each started by the host's cron. Add them here when they exist.
 
 ## Stack
 
@@ -69,8 +69,10 @@ src/
   crawler/
     adapters/       # one adapter per source: fetch + parse, nothing else
     run.ts          # scrapper process entry: runs the sources that are due
-  catalogues/       # what the scrapper needs to tag adverts (ISCO/ESCO, countries, ...)
-  storage/          # the only module that touches files (future: DB); the future API reads what it writes
+  processor/        # normalise → enrich → gate → dedupe → publish; run.ts is its entry
+  translation/      # title translation: engine, per-title caches; its own entry, its own cron
+  catalogues/       # ISCO/ESCO, countries, towns, languages, degrees (owned here, published for the API)
+  storage/          # the only module that touches files (future: DB): store, caches, published dataset
   config/           # source lists, cadences, takedowns
 test/
   fixtures/         # saved source responses for offline parser tests
@@ -82,9 +84,9 @@ When reproducing behavior, check the legacy repo rather than guessing:
 
 - `builder/adapters/*.mjs`: one adapter per source. Port them one at a time, each with a fixture-based test.
 - `builder/crawl.mjs`, `builder/config/crawl.yml`: crawl cadence and state.
-- `builder/gate.mjs`, `builder/dedupe.mjs`, `builder/build-pile.mjs`: pile rules (not in the scrapper's scope for now, see `AGENTS.md` open decisions).
+- `builder/gate.mjs`, `builder/dedupe.mjs`, `builder/build-pile.mjs`: pile rules, ported into the processor.
 - `builder/isco-esco.mjs`, `catalogues/`: occupation scope and catalogues.
 - `packages/published-data`: the published data shape the old web read. Start from it when writing the Zod schemas.
 - `builder/config/takedowns.yml`, `companies*.yml`, `careers*.yml`, `vendors.yml`: source lists and takedowns.
 - `docs/CRAWLING.md`: crawling research and sources.
-- `builder/mt/`: the legacy machine translation. It is the reference for producing translated adverts; how translation is done in the rewrite is still an open decision (see `AGENTS.md`).
+- `builder/mt/`: the legacy machine translation. It is the reference for producing translated adverts; the rewrite translates titles only, with an engine on our own server (see `AGENTS.md`).
