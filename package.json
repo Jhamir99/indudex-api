@@ -1,5 +1,5 @@
 {
-  "name": "indudex-api",
+  "name": "indudex-scrapper",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",

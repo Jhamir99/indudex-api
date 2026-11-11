@@ -2,13 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Read `AGENTS.md` first.** It holds the product context, the scope of this repo, the privacy and crawling rules, the API shape, the contract with the frontend and the open decisions. This file only adds Claude Code specifics and does not repeat them.
+**Read `AGENTS.md` first.** It holds the product context, the scope of this repo, the privacy and crawling rules, the contract with the future API and the open decisions. This file only adds Claude Code specifics and does not repeat them.
 
 ## Status
 
-Backend of Indudex, rewritten from the monolith [`JustJans/indudex`](https://github.com/JustJans/indudex). The repo is still the Hono starter (`src/index.ts` with one `GET /`). Update this file as real architecture emerges.
+Scrapper of Indudex (repo `indudex-scrapper`, formerly `indudex-api`), rewritten from the monolith [`JustJans/indudex`](https://github.com/JustJans/indudex). It collects adverts and stores them as JSON; the future `indudex-api` will read them and serve the frontend.
 
-The server listens on `PORT` (default 4000).
+The code is still the Hono starter (`src/index.ts`, `src/app.ts`, `GET /health`, port `PORT` or 4000, Dockerfile and `docker-compose.yml` with the web). It is a leftover from when this repo was the API: the scrapper is a process, not a server, and that starter is meant to move to `indudex-api` when it is created. Update this file as real architecture emerges.
 
 ## Core conventions
 
@@ -31,7 +31,7 @@ pnpm test:run   # vitest once (use this to verify a change)
 pnpm vitest run src/app.test.ts   # a single test file
 pnpm lint       # oxlint --deny-warnings
 pnpm format     # prettier --write .   (format:check in CI)
-docker compose up --build   # API on :4000 + web on :3000 (needs ../indudex-web next to this repo)
+docker compose up --build   # starter leftover: API on :4000 + web on :3000 (moves to indudex-api)
 ```
 
 Before calling a change done, run what CI runs: `pnpm lint && pnpm format:check && pnpm typecheck && pnpm test:run && pnpm build`.
@@ -48,33 +48,29 @@ Tooling:
 - **Prettier** with default options (double quotes, semicolons), the same style as indudex-web.
 - **Pre-commit hook** (husky + lint-staged, config in `package.json`): runs oxlint and Prettier on staged files. Never bypass it with `--no-verify`.
 - **CI** (`.github/workflows/ci.yml`): lint, format check, typecheck, tests and build on every push to `main` and every PR. Node version from `.nvmrc`, pnpm from `packageManager`.
-- **Docker**: `Dockerfile` builds `dist/` and runs it with production dependencies only. `docker-compose.yml` runs this API together with indudex-web; it lives here because there is no shared repo for both. Env vars: see `.env.example` (`PORT`, `CORS_ORIGIN`).
+- **Docker**: `Dockerfile` builds `dist/` and runs it with production dependencies only. `docker-compose.yml` still runs the starter together with indudex-web; it lives here only until `indudex-api` exists, then it moves there. Env vars: see `.env.example` (`PORT`, `CORS_ORIGIN`).
 
 Planned, not created yet: separate entry points for the crawler and the pile build. Add them here when they exist.
 
 ## Stack
 
 - Node, **TypeScript 7** (strict, ESM / `NodeNext`, `verbatimModuleSyntax`), `tsx` for development. Only `tsc` (TypeScript 7.0.2, the single copy in the tree) checks types: `tsx` and Vitest strip types without checking them, so run `pnpm typecheck` to verify a change. Keep `typescript` on `^7`; dependencies must not pull in an older copy (`pnpm why typescript` shows one version).
-- Hono 4 served by `@hono/node-server`.
+- Hono 4 served by `@hono/node-server` (starter leftover, see Status).
 - Vitest 5 for tests (`vitest.config.ts`, Node environment).
-- Zod 4 + `@hono/zod-openapi` 1. Import `z` from `@hono/zod-openapi` (it adds `.openapi()`), not from `zod`. `src/app.ts` is an `OpenAPIHono` app: routes are `createRoute` + `app.openapi(...)`, schemas are named with `.openapi('Name')` so they land in `components.schemas`, and `app.doc31('/openapi.json', ...)` serves the spec. Current routes: `GET /health`, `GET /openapi.json`.
+- Zod 4 + `@hono/zod-openapi` 1 (the adverts' Zod schemas are the contract with the future API; the OpenAPI part is starter leftover). Import `z` from `@hono/zod-openapi` (it adds `.openapi()`), not from `zod`. `src/app.ts` is an `OpenAPIHono` app: routes are `createRoute` + `app.openapi(...)`, schemas are named with `.openapi('Name')` so they land in `components.schemas`, and `app.doc31('/openapi.json', ...)` serves the spec. Current routes: `GET /health`, `GET /openapi.json`.
 
 ## Intended structure
 
-Target layout; only `index.ts` and `app.ts` exist so far. Adjust here when it changes:
+Target layout; only `index.ts` and `app.ts` (the starter, to move out) exist so far. Adjust here when it changes:
 
 ```
 src/
-  index.ts          # API process entry: builds the app, serves it on PORT
-  app.ts            # OpenAPIHono app: routes mounted here, spec at /openapi.json; tests call app.request
-  routes/           # one file per resource; Zod/OpenAPI route definitions
-  schemas/          # shared Zod schemas: advert, shard, index, catalogue, source
+  schemas/          # shared Zod schemas: advert, source (with licence), source state
   crawler/
     adapters/       # one adapter per source: fetch + parse, nothing else
-    run.ts          # crawler process entry: runs the sources that are due
-  pile/             # normalise → gate → dedupe → translate → shards/index per locale
-  catalogues/       # ISCO/ESCO, countries, towns, languages, degrees
-  storage/          # the only module that touches files (future: DB)
+    run.ts          # scrapper process entry: runs the sources that are due
+  catalogues/       # what the scrapper needs to tag adverts (ISCO/ESCO, countries, ...)
+  storage/          # the only module that touches files (future: DB); the future API reads what it writes
   config/           # source lists, cadences, takedowns
 test/
   fixtures/         # saved source responses for offline parser tests
@@ -86,7 +82,7 @@ When reproducing behavior, check the legacy repo rather than guessing:
 
 - `builder/adapters/*.mjs`: one adapter per source. Port them one at a time, each with a fixture-based test.
 - `builder/crawl.mjs`, `builder/config/crawl.yml`: crawl cadence and state.
-- `builder/gate.mjs`, `builder/dedupe.mjs`, `builder/build-pile.mjs`: pile rules.
+- `builder/gate.mjs`, `builder/dedupe.mjs`, `builder/build-pile.mjs`: pile rules (not in the scrapper's scope for now, see `AGENTS.md` open decisions).
 - `builder/isco-esco.mjs`, `catalogues/`: occupation scope and catalogues.
 - `packages/published-data`: the published data shape the old web read. Start from it when writing the Zod schemas.
 - `builder/config/takedowns.yml`, `companies*.yml`, `careers*.yml`, `vendors.yml`: source lists and takedowns.

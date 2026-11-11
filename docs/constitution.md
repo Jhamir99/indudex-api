@@ -1,4 +1,4 @@
-# Constitution — Indudex API
+# Constitution — Indudex scrapper
 
 Non-negotiable principles. Every spec, plan and task must comply with them.
 

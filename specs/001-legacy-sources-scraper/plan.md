@@ -60,7 +60,7 @@ This matches the target layout already in `CLAUDE.md`; `domain/`, `http/`, `kit/
 
 **SourceAdapter** (port). Each source provides: an id; its kind; its licence data (name, short name, url, licence text, credit line); whether it needs credentials and which; and a way to produce adverts from its site through the injected `HttpClient`. Parsing is a pure function from a saved response to raw adverts, so tests need no network.
 
-**Advert** (Zod, the single source of truth): source id, stable advert id derived from source and source-specific id, title, company, location, country, city, remote flag and mode, url, description (length-capped), posted date, expiry date (optional; when absent, 2 years after posted date applies), occupation codes, original language, and the licence and credit of its source. No person data. The shape is exposed in the OpenAPI contract when the HTTP layer needs it, so the pile build can rely on it (completion criteria).
+**Advert** (Zod, the single source of truth): source id, stable advert id derived from source and source-specific id, title, company, location, country, city, remote flag and mode, url, description (length-capped), posted date, expiry date (optional; when absent, 2 years after posted date applies), occupation codes, original language, and the licence and credit of its source. No person data. The schemas and the stored JSON layout are the contract with the future `indudex-api` (completion criteria); there is no OpenAPI here.
 
 **Source state**: enabled, disabled (missing credentials or flagged as broken), failed (with reason), disallowed (by `robots.txt`), parked (until a date); time of last run; adverts obtained; consecutive failures; next due time.
 

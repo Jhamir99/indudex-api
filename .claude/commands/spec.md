@@ -4,7 +4,7 @@ argument-hint: <feature description>
 ---
 
 NEVER write code. We are going to draft the specification of a new
-Indudex API feature. Read docs/constitution.md.
+Indudex scrapper feature. Read docs/constitution.md.
 Initial idea: $ARGUMENTS
 
 Your job:
