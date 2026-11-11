@@ -1,10 +1,16 @@
-# Indudex API — agent guide
+# Indudex scrapper — agent guide
 
 ## What this is
 
-Indudex is a free, public job portal for **engineers and technicians in Europe** (engineering, technical and IT occupations). This repository is **the backend** (`indudex-api`). The frontend is a separate repo, `indudex-web` (Next.js), a sibling of this one.
+Indudex is a free, public job portal for **engineers and technicians in Europe** (engineering, technical and IT occupations). This repository is **the scrapper** (`indudex-scrapper`): the component that collects the adverts and stores them as JSON (a database may follow later). Indudex has three components, each in its own repo:
 
-Both are a rewrite of the monolith [`JustJans/indudex`](https://github.com/JustJans/indudex), which mixed the web app, the crawler/pile builder and ops scripts in one poorly structured codebase. Use the legacy repo as the **behavioral reference** (sources, gate rules, dedupe, data shape), not as code to copy: it is being restructured precisely because its structure is bad.
+- **`indudex-scrapper`** (this repo): collects adverts from the sources and writes them to storage.
+- **`indudex-api`** (does not exist yet, to be created): the backend. It reads the adverts the scrapper stored and serves them to the frontend.
+- **`indudex-web`** (Next.js, a sibling of this repo): the frontend.
+
+The scrapper never talks to the frontend. Its only output is the stored adverts; the API's only input from it is that storage.
+
+All three are a rewrite of the monolith [`JustJans/indudex`](https://github.com/JustJans/indudex), which mixed the web app, the crawler/pile builder and ops scripts in one poorly structured codebase. Use the legacy repo as the **behavioral reference** (sources, gate rules, dedupe, data shape), not as code to copy: it is being restructured precisely because its structure is bad.
 
 ## Memory
 
@@ -24,23 +30,25 @@ Both are a rewrite of the monolith [`JustJans/indudex`](https://github.com/JustJ
 
 In scope:
 
-1. **HTTP API** (Hono on Node) that the frontend consumes.
-2. **Crawler**: one adapter per source (public employment services, ATS APIs, employers' careers sites, partner feeds), each on its own cadence.
-3. **Pile build**: normalise → gate (keep only in-scope occupations in Europe, drop expired; an advert without an expiry date expires 2 years after its posted date) → dedupe → translate → shards + index + metadata.
-4. **Translated adverts**: every advert is stored and served **already translated into every supported locale** (`en`, `es`, `ca`, the same locale codes as the frontend; Catalan is `ca`, even though the frontend URL says `/cat`), so the client never waits for a translation. Adverts are text only, so keeping one copy per locale is cheap.
-5. **Catalogues**: occupations (ISCO-08 groups and their ESCO occupations/titles), countries, towns, languages, degrees, vetoes.
-6. **Storage access** for adverts and crawler state (see "Storage").
+1. **Crawler**: one adapter per source (public employment services, ATS APIs, employers' careers sites, partner feeds), each on its own cadence.
+2. **Validated adverts in one common format** (a Zod schema), with each source's licence and credit attached.
+3. **Expiry**: an advert without an expiry date expires 2 years after its posted date (first-seen date if the source gives none).
+4. **Storage access** for adverts and crawler state (see "Storage").
+5. **Catalogues** the scrapper needs to tag adverts (occupations, countries, …). Who owns the catalogues the API also needs is an open decision.
 
 Out of scope:
 
+- **Serving anything over HTTP** and everything the frontend consumes (shards, indexes, catalogue and advert endpoints, OpenAPI): that is the future `indudex-api`.
 - **Anything about the user.** See the privacy rules below.
 - UI copy and locale routing (that is the frontend).
+
+Undecided, see "Open decisions": where the rest of the legacy pile build lives (gate, dedupe, translate, shards + index + metadata). Spec 001 stops at validated stored adverts.
 
 ## Non-negotiable rules
 
 ### Privacy
 
-The product has no accounts, no email and stores nothing about the user. The CV is parsed in the browser and the filter profile (the "plate") lives in the URL hash. Therefore:
+The scrapper handles no user data at all. The rules below bind the product and the future API, and the scrapper must never be the way around them. The product has no accounts, no email and stores nothing about the user. The CV is parsed in the browser and the filter profile (the "plate") lives in the URL hash. Therefore:
 
 - Never add endpoints that receive a CV, CV text or a full plate/profile.
 - No user tables, sessions, cookies, analytics or third-party tracking.
@@ -57,26 +65,16 @@ Carried over from the legacy project:
 - Be polite: per-host rate limits, a cadence per source, and a manual stop switch.
 - API keys and credentials live only in `.env` (never committed); keep an up-to-date `.env.example`.
 
-## API shape: hybrid
+## Contract with the API
 
-The frontend does the fine-grained matching **on the client**, so the API serves:
-
-- **The pile as shards** (JSON split by **locale**, occupation family and country) + an index + metadata (e.g. when it was last rebuilt). The client downloads only the shards of its current locale and filters locally.
-- **Regular endpoints** for catalogues, advert detail, sources and their licences, pile status, health.
-
-Do not add server-side search that would require the full user profile (see Privacy).
-
-## Contract with the frontend
-
-- The single source of truth is **Zod schemas declared through `@hono/zod-openapi`**. They validate requests/responses at runtime, give the backend its TS types and generate the **OpenAPI** spec.
-- The spec is served by the API at `GET /openapi.json` (OpenAPI 3.1). Every route is defined with `createRoute` + `app.openapi(...)` so it appears in the spec; plain `app.get(...)` routes are invisible to the frontend's generated client. The frontend generates its types and client from it (`openapi-typescript` + `openapi-fetch`) and reaches the API through `NEXT_PUBLIC_API_URL`, from the browser too. There is no shared types package.
-- Shard and index files are also described as schemas in the spec.
-- An advert has the **same id and the same non-text fields in every locale**; only the translatable text (title, description, …) differs. A plate or a link must point to the same advert whatever the language.
-- Breaking changes to the contract need a version bump of the affected route or shard format. Never change the shape of a published field silently.
+- The contract between the scrapper and the future `indudex-api` is **the stored JSON**: its shape is declared once as **Zod schemas** (advert, source with licence and credit, source state) and every advert is validated against them before it is stored.
+- An advert has a **stable id** derived from its source and the source's own id, so the API can link to it whatever else changes.
+- Breaking changes to the stored shape need a version bump of the format. Never change the shape of a stored field silently; the API depends on it.
+- The OpenAPI contract with the frontend (`@hono/zod-openapi`, `GET /openapi.json`, `openapi-typescript` on the frontend side) belongs to the future `indudex-api`. This repo has no HTTP surface of its own.
 
 ## Storage
 
-**Undecided long-term.** For now, adverts and crawler state are stored in **files** on disk (as the legacy store did), with **one set of advert files per locale**. A database may replace this later. Keep all storage access behind a small repository module so it can be swapped for a database later. Routes, adapters and the pipeline must never touch the filesystem layout directly.
+**Undecided long-term.** For now, adverts and crawler state are stored as **JSON files** on disk (as the legacy store did), one set per source. A database may replace this later. Keep all storage access behind a small repository module so it can be swapped for a database later. Adapters and the runner must never touch the filesystem layout directly. The future API reads this storage, so the layout is part of the contract above.
 
 ## Conventions
 
@@ -85,11 +83,9 @@ Do not add server-side search that would require the full user profile (see Priv
 - **Simple code**: prefer the plainest solution that works; no abstractions until a second real use needs them. Use descriptive names (no cryptic abbreviations). Comment only where it adds something the code cannot say, such as _why_ a non-obvious decision was made, never _what_ the next line does.
 - TypeScript strict, ESM (`"type": "module"`, `NodeNext`, `verbatimModuleSyntax`: use `import type` for types and `.js` extensions in relative imports).
 - Package manager: **pnpm**.
-- Validation with **Zod**, at the edges: HTTP input/output and data coming from every source.
-- Tests with **Vitest**, without network: adapter parsers run against saved fixtures; gate, dedupe and schemas get unit tests.
-- Default port **4000**, overridable with `PORT` (the frontend's Next dev server uses 3000).
-- Deployment: **Docker on a self-hosted server** (`Dockerfile`, and `docker-compose.yml` for API + web). API and crawler run as separate processes (the crawler/pile build on a schedule) sharing the same code and storage.
-- **CORS**: the browser calls the API directly, so the frontend's origin must be listed in `CORS_ORIGIN` (comma-separated). Only `GET` is allowed: the API is read-only for clients.
+- Validation with **Zod**, at the edges: data coming from every source and data written to storage.
+- Tests with **Vitest**, without network: adapter parsers run against saved fixtures; schemas and the runner get unit tests.
+- Deployment: **Docker on a self-hosted server**. The scrapper runs as its own process on a schedule (an hourly external cron decides what is due) and writes to storage shared with the future API.
 - Linting with **oxlint** (ESLint's TypeScript support does not cover TypeScript 7), formatting with **Prettier**. A pre-commit hook and CI enforce both.
 
 ## Open decisions
@@ -97,6 +93,8 @@ Do not add server-side search that would require the full user profile (see Priv
 Do not assume an answer to these; ask or leave a clear TODO.
 
 - Long-term storage (database or not, which one).
-- How shards are served: from the API process or as static files behind a reverse proxy.
-- How adverts get translated: which engine (legacy used its own MT in `builder/mt`) and whether it runs in this repo or as a separate service. Either way, the result is stored here as described above.
+- Where the rest of the pile build lives (gate, dedupe, translate, shards + index + metadata): a later stage of the scrapper or the future `indudex-api`.
+- Who owns the catalogues (ISCO/ESCO, countries, towns, languages, degrees) when both the scrapper and the API need them.
+- How shards are served (API process or static files behind a reverse proxy): an `indudex-api` decision.
+- How adverts get translated: which engine (legacy used its own MT in `builder/mt`) and whether it runs in this repo, in the API or as a separate service.
 - Whether the original-language text is kept and shown too, and how missing translations fall back (e.g. to English).

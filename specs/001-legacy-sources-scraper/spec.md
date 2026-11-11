@@ -6,14 +6,14 @@ Status: draft. Written from the initial idea and five clarifying answers.
 
 Indudex publishes job adverts for engineers and technicians in Europe. The adverts come from many public sources: employment services, ATS APIs, employers' career pages and partner feeds. The legacy project (`JustJans/indudex`) already collects them with about fifty source-specific collectors, but its structure is poor: much of the code is repeated between sources and it is hard to follow.
 
-**Goal:** bring every source of the legacy project into this backend as a scraper that is polite, resilient and consistent, and that hands clean adverts to the rest of the pipeline. Where the legacy code is repetitive, the common behaviour is expressed once instead of per source.
+**Goal:** bring every source of the legacy project into this repo, `indudex-scrapper`, as a scraper that is polite, resilient and consistent, and that stores clean adverts as JSON for downstream consumers (the future `indudex-api`). Where the legacy code is repetitive, the common behaviour is expressed once instead of per source.
 
 **Why:** without sources there is no pile to serve. A consistent scraper lets new sources be added cheaply and keeps every source's licence and attribution attached to its adverts, as the product promises.
 
 ## 2. Users
 
 - **Operator** (the maintainer): runs and monitors the scraper, enables sources, stops it, answers takedown requests.
-- **Pile build** (downstream process): consumes the validated adverts to gate, deduplicate, translate and publish them.
+- **Downstream consumer** (the future `indudex-api`, or a pile-build stage): reads the validated stored adverts to gate, deduplicate, translate and serve them. Where that stage lives is an open decision in `AGENTS.md`.
 - **Visitor** (indirect): sees adverts and the attribution each source requires, without ever being tracked.
 
 ## 3. User stories
@@ -22,7 +22,7 @@ Indudex publishes job adverts for engineers and technicians in Europe. The adver
 - As the operator, I want one source's failure not to affect the others so that a single broken site never stops the run.
 - As the operator, I want to see the status of each source, and why it failed or is disabled, so that I know what needs attention.
 - As the operator, I want to stop all scraping at once so that I can react to a complaint or an incident.
-- As the pile build, I want adverts in one common validated format so that I do not need to know about each source.
+- As a downstream consumer, I want adverts in one common validated format so that I do not need to know about each source.
 - As a visitor, I want the required attribution (for example "Jobs by Adzuna") shown with each advert so that sources are credited as their licence requires.
 
 ## 4. Functional requirements
@@ -117,7 +117,7 @@ _Acceptance:_ Adding a new source requires describing only what is specific to t
 ## 7. Out of scope
 
 - Gate (occupation, geography and expiry filtering), deduplication, translation and shard or index generation.
-- Serving adverts over HTTP and any frontend behaviour.
+- Serving adverts over HTTP (that is the future `indudex-api`) and any frontend behaviour.
 - Choosing the long-term storage technology.
 - Obtaining API keys or partner agreements.
 - Any feature about the user (profiles, CVs, accounts, tracking).
@@ -129,7 +129,7 @@ _Acceptance:_ Adding a new source requires describing only what is specific to t
 - Every source passes its offline test against a saved sample.
 - A run with a deliberately broken source finishes and keeps that source's previous adverts.
 - The stop switch, takedowns, `robots.txt` and rate limits are demonstrated by tests.
-- The common advert format is documented in the API contract so the pile build can rely on it.
+- The common advert format is declared once as Zod schemas, and the stored JSON layout is documented, so the future API can rely on them.
 - No credential appears in the repository.
 
 ## 9. Open questions
