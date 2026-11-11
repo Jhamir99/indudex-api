@@ -12,7 +12,11 @@ Working memory of indudex-scrapper. Rules for keeping it: see "Memory" in `AGENT
 
 **Not built yet**
 
-- Everything in the scrapper's scope: crawler and adapters, advert/source Zod schemas, storage module, catalogues it needs, crawler entry point. The API, shards and pile build are not here.
+- Everything: scrapper (crawler, adapters, schemas, storage), processor (normalise, gate, dedupe, title translation, published dataset), catalogues, entry points. The API lives in its own future repo.
+
+**Pending (later)**
+
+- Move the matching rules (legacy Argus title rules) into a versioned shared package (`indudex-matching`, installed by git tag in the processor and the web, compiled JS + `.d.ts` so TS 5.9 and 7 both read it), replacing the copies.
 
 **Next**
 
@@ -20,7 +24,8 @@ Working memory of indudex-scrapper. Rules for keeping it: see "Memory" in `AGENT
 
 ## Decisions
 
-- 2026-11-11: split into three components. This repo is now `indudex-scrapper` (was `indudex-api`): collects adverts and stores JSON (DB maybe later). `indudex-api` will be a new repo that reads that storage and serves `indudex-web`. The stored JSON, validated by Zod schemas, is the contract between them. Why: the scrapper is a scheduled process, not a server, and the API should not own crawling. The Hono starter here is a leftover to move to `indudex-api`. Open: where gate/dedupe/translate/shards live, and who owns the catalogues.
+- 2026-11-11: split into three components. This repo is now `indudex-scrapper` (was `indudex-api`): collects adverts and stores JSON (DB maybe later). `indudex-api` will be a new repo that reads that storage and serves `indudex-web`. The stored JSON, validated by Zod schemas, is the contract between them. Why: the scrapper is a scheduled process, not a server, and the API should not own crawling. The Hono starter here is a leftover to move to `indudex-api`.
+- 2026-11-11: four components in three repos (diagram in `AGENTS.md`). Scrapper and processor are separate batch processes in this repo, talking only through files: store → processor → versioned published dataset + `current` pointer → read-only API → web. Why: collecting is slow and network-bound, preparing is CPU-only and repeatable, and the API should stay thin. Same repo because they share schemas, catalogues and storage. The processor owns the catalogues and translates titles only, on our own server. Advert text is never published or translated (as in the legacy). Cron on the host for now. Shards: served by the API under versioned paths with immutable caching, Cloudflare in front (hybrid; why: one domain for the web, the CDN takes the load off the home server). Matching rules: a copy in each repo for now (why: no extra repo before the gate exists).
 
 - Spec 001 (`specs/001-legacy-sources-scraper/spec.md`) is drafted, not approved: all legacy sources by waves, failures isolated with previous adverts kept, scraper stops at validated stored adverts, sources without credentials ported but disabled. Adverts without an expiry date last 2 years (from posted date, else first-seen date); broken legacy sources are ported disabled and flagged. Waves are by source type; cadence, rate limits and backoff start from the legacy `crawl.yml` values, configurable per source. No open questions left; ready to approve.
 - Tests use Vitest; the `node --test` line in the constitution was a copy-paste slip and was removed.
